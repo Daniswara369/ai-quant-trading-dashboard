@@ -1,9 +1,7 @@
 import Plot from 'react-plotly.js';
 import { useState } from 'react';
 
-export default function CandlestickChart({ data, signals, symbol, timeframe }) {
-    const [showSignals, setShowSignals] = useState(true);
-
+export default function CandlestickChart({ data, signals, symbol, timeframe, showSignals }) {
     if (!data || data.length === 0) {
         return <div className="flex items-center justify-center h-96 text-slate-500">No chart data available</div>;
     }

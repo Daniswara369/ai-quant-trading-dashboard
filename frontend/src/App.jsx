@@ -19,6 +19,7 @@ import {
 export default function App() {
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [timeframe, setTimeframe] = useState('1h');
+  const [showSignals, setShowSignals] = useState(true);
   const [loading, setLoading] = useState(false);
 
   // Data states
@@ -115,12 +116,25 @@ export default function App() {
           {/* Chart — 3/4 width */}
           <div className="lg:col-span-3 metric-card p-2">
             <div className="flex items-center justify-between px-3 py-2">
-              <h2 className="text-sm font-semibold text-slate-300">
-                {symbol} <span className="text-slate-600">•</span> <span className="text-slate-500">{timeframe}</span>
-              </h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-sm font-semibold text-slate-300">
+                  {symbol} <span className="text-slate-600">•</span> <span className="text-slate-500">{timeframe}</span>
+                </h2>
+                <button 
+                  onClick={() => setShowSignals(!showSignals)}
+                  className={`px-3 py-1 text-[10px] font-bold tracking-wider uppercase rounded-full transition-all duration-300 border ${
+                    showSignals 
+                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/40' 
+                    : 'bg-slate-800/80 text-slate-500 border-slate-700/80 hover:bg-slate-700 hover:text-slate-400'
+                  }`}
+                >
+                  <div className={`w-1.5 h-1.5 rounded-full ${showSignals ? 'bg-blue-400 animate-pulse' : 'bg-slate-600'}`} />
+                  {showSignals ? 'Signals ON' : 'Signals OFF'}
+                </button>
+              </div>
               {loading && <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />}
             </div>
-            <CandlestickChart data={chartData} signals={signalsData} symbol={symbol} timeframe={timeframe} />
+            <CandlestickChart data={chartData} signals={signalsData} symbol={symbol} timeframe={timeframe} showSignals={showSignals} />
           </div>
 
           {/* Prediction — 1/4 width */}
