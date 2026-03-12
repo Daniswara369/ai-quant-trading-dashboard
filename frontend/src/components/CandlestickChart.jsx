@@ -150,7 +150,7 @@ export default function CandlestickChart({ data, signals, symbol, timeframe }) {
         <div className="w-full relative group">
             <button 
                 onClick={() => setShowSignals(!showSignals)}
-                className={`absolute top-0 right-1/2 translate-x-1/2 z-10 px-3 py-1 text-xs font-semibold rounded-md transition-all duration-200 border shadow-sm ${
+                className={`absolute top-2 right-[280px] z-10 px-3 py-1 text-xs font-semibold rounded-md transition-all duration-200 border shadow-sm ${
                     showSignals 
                     ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20' 
                     : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
