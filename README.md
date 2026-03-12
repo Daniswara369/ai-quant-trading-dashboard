@@ -13,6 +13,23 @@ Quantryst is an end-to-end algorithmic trading system designed for quantitative 
 
 Built initially as a terminal tool and evolved into a production-grade web application, this platform supports **Crypto, US Stocks, and Forex pairs**.
 
+## 📊 Dashboard Preview
+
+### Trading Signal Panel
+
+**Signal OFF**
+![Signal Off](https://github.com/user-attachments/assets/16b0b084-de57-4150-9d8f-64289f3f9982)
+
+**Signal ON**
+![Signal On](https://github.com/user-attachments/assets/0e0c2713-0a8c-41e4-bc20-1166164329c7)
+
+### Backtesting Results
+![Backtest](https://github.com/user-attachments/assets/08e88b0a-1d21-44ed-a98c-1fdd66c75e92)
+
+### Multi Asset Overview
+![Multi Asset](https://github.com/user-attachments/assets/e58fe26d-d5b7-4048-b73f-29147876e70d)
+
+
 ## ✨ Key Features
 
 - **Automated Data Pipelines**: Integrates with Binance, yfinance, and Yahoo Finance to fetch multi-asset OHLCV data.
