@@ -10,7 +10,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import BINANCE_INTERVAL_MAP
 
-BINANCE_BASE_URL = "https://api.binance.com/api/v3/klines"
+# Use the data-api endpoint to avoid 451 IP blocks from US-based cloud servers (Hugging Face)
+BINANCE_BASE_URL = "https://data-api.binance.vision/api/v3/klines"
 
 
 def fetch_crypto_data(symbol: str, timeframe: str = "1h", limit: int = 1000) -> pd.DataFrame:
