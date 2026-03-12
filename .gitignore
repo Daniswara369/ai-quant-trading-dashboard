@@ -1,0 +1,26 @@
+# Python / Environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Application Specific Caches & Generated Files
+logs/
+data/cache/
+models/saved/
+backtesting/cache/
+
+# IDE / OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.eslintcache
