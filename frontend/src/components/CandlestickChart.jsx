@@ -1,6 +1,9 @@
 import Plot from 'react-plotly.js';
+import { useState } from 'react';
 
 export default function CandlestickChart({ data, signals, symbol, timeframe }) {
+    const [showSignals, setShowSignals] = useState(true);
+
     if (!data || data.length === 0) {
         return <div className="flex items-center justify-center h-96 text-slate-500">No chart data available</div>;
     }
@@ -76,7 +79,7 @@ export default function CandlestickChart({ data, signals, symbol, timeframe }) {
     }
 
     // Buy/Sell markers from signals
-    if (signals && signals.length > 0) {
+    if (showSignals && signals && signals.length > 0) {
         const buys = signals.filter(s => s.signal === 'BUY');
         const sells = signals.filter(s => s.signal === 'SELL');
 
@@ -144,7 +147,18 @@ export default function CandlestickChart({ data, signals, symbol, timeframe }) {
     };
 
     return (
-        <div className="w-full">
+        <div className="w-full relative group">
+            <button 
+                onClick={() => setShowSignals(!showSignals)}
+                className={`absolute top-0 right-1/2 translate-x-1/2 z-10 px-3 py-1 text-xs font-semibold rounded-md transition-all duration-200 border shadow-sm ${
+                    showSignals 
+                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20' 
+                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                }`}
+                style={{ zIndex: 100 }}
+            >
+                {showSignals ? 'Hide Signals' : 'Show Signals'}
+            </button>
             <Plot
                 data={traces}
                 layout={layout}
