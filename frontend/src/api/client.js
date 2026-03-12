@@ -1,8 +1,14 @@
 import axios from 'axios';
 
+// Auto-format the API URL to guarantee it ends with /api to match FastAPI routes
+let base = import.meta.env.VITE_API_URL || '/api';
+if (base !== '/api' && !base.endsWith('/api')) {
+    // Strip trailing slash if it exists before appending /api
+    base = base.replace(/\/$/, '') + '/api';
+}
+
 const API = axios.create({
-    // Use VITE_API_URL if deployed, otherwise fallback to local proxy
-    baseURL: import.meta.env.VITE_API_URL || '/api',
+    baseURL: base,
     timeout: 30000,
 });
 
