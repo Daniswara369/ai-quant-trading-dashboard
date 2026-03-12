@@ -150,14 +150,14 @@ export default function CandlestickChart({ data, signals, symbol, timeframe }) {
         <div className="w-full relative group">
             <button 
                 onClick={() => setShowSignals(!showSignals)}
-                className={`absolute top-2 right-[280px] z-10 px-3 py-1 text-xs font-semibold rounded-md transition-all duration-200 border shadow-sm ${
+                className={`absolute bottom-[100px] right-6 z-[100] px-4 py-2 text-xs font-bold tracking-wider uppercase rounded-full transition-all duration-300 backdrop-blur-md shadow-lg flex items-center gap-2 border ${
                     showSignals 
-                    ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20' 
-                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30 hover:scale-105 shadow-blue-500/20' 
+                    : 'bg-slate-800/80 text-slate-400 border-slate-700/80 hover:bg-slate-700/80 hover:scale-105 shadow-black/50'
                 }`}
-                style={{ zIndex: 100 }}
             >
-                {showSignals ? 'Hide Signals' : 'Show Signals'}
+                <div className={`w-2 h-2 rounded-full ${showSignals ? 'bg-blue-400' : 'bg-slate-500'}`}></div>
+                {showSignals ? 'Hide AI Signals' : 'Show AI Signals'}
             </button>
             <Plot
                 data={traces}
