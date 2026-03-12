@@ -11,7 +11,7 @@ env/
 # Application Specific Caches & Generated Files
 logs/
 data/cache/
-models/saved/
+
 backtesting/cache/
 
 # IDE / OS Files
