@@ -105,4 +105,4 @@ python main.py --mode signal --symbol EURUSD --market forex --timeframe 15m --mo
 
 ## ⚠️ Disclaimer
 
-**This software is for educational and research purposes only.** Do not use these models to trade real money without understanding the inherent risks of programmatic trading. The financial markets are highly volatile, and past performance calculated in backtests does not guarantee future results.
+**This project is for educational and research purposes only.** Do not use these models to trade real money without understanding the inherent risks of programmatic trading. The financial markets are highly volatile, and past performance calculated in backtests does not guarantee future results.
