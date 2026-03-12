@@ -1,12 +1,3 @@
----
-title: Quantryst API
-emoji: 📈
-colorFrom: blue
-colorTo: purple
-sdk: docker
-pinned: false
----
-
 # Quantryst AI Trading Platform
 
 > A full-stack Quantitative Trading Research platform powered by Machine Learning.
