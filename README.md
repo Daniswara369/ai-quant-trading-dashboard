@@ -1,4 +1,4 @@
-# Quantryst AI Trading Platform
+# Quantryst AI Trading Analytics
 
 > A full-stack Quantitative Trading Research platform powered by Machine Learning.
 
