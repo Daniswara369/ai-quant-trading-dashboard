@@ -11,7 +11,7 @@ Quantryst is an end-to-end algorithmic trading system designed for quantitative 
 
 🌍 **Live Demo:** [https://ai-quant-trading-dashboard.vercel.app/]
 
-Built initially as a terminal tool and evolved into a production-grade web application, this platform supports **Crypto, US Stocks, and Forex pairs**.
+Built initially as a terminal tool and evolved into a production-grade web application, this platform supports **Crypto (BTC, ETH), US Stocks (AAPL, MSFT, TSLA), and Forex pairs (EURUSD, GBPUSD, USDJPY)**.
 
 ## 📊 Dashboard Preview
 
