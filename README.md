@@ -65,7 +65,7 @@ First, install the Python dependencies and boot the FastAPI backend:
 ```bash
 # Clone the repository
 git clone https://github.com/Daniswara369/ai-quant-trading-dashboard.git
-cd quantryst
+cd ai-quant-trading-dashboard
 
 # Set up a virtual environment (optional but recommended)
 python -m venv .venv
