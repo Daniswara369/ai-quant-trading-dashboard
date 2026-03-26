@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Architecture Diagram</title>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+    <style>
+        body { 
+            background: #1e1e1e; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            font-family: sans-serif;
+        }
+        .mermaid {
+            background: #2d2d2d;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="mermaid">
+graph LR
+    subgraph Sources [1. Data Inputs]
+        M(Market Data<br>yFinance / 12Data)
+        N(Live News<br>CryptoCompare)
+    end
+    
+    subgraph Committee [2. Agent Committee]
+        Tech(Technician Agent<br>Technical Indicators)
+        Narr(Narrator Agent<br>Sentiment Analysis)
+        Crit(Critic Agent<br>Trap & Risk Detection)
+        
+        Tech <-->|Rebuttals vs Objections| Crit
+    end
+    
+    subgraph Manager [3. The Manager]
+        Regime(Market Regime Engine<br>Trending vs Ranging)
+        Sup(Supervisor Agent<br>Gemini 2.5 Flash Deep Thinking)
+        
+        Tech -->|Bullish/Bearish Evidence| Sup
+        Narr -->|Macro Sentiment| Sup
+        Crit -->|Warning Signals| Sup
+        Regime -->|Dynamic Weights| Sup
+    end
+    
+    subgraph Risk [4. Risk Management Team]
+        RM(Risk Manager<br>5% Hard Stop & Half-Kelly Sizing)
+        SS(Stale Signal Guard<br>0.15% Price Threshold)
+    end
+    
+    subgraph Exec [5. Action]
+        Trade(Execute Mock Trade)
+    end
+    
+    M --> Tech
+    M --> Regime
+    M --> Crit
+    N --> Narr
+    
+    Sup -->|Transaction Proposal| RM
+    Sup -->|Trade Trigger Price| SS
+    
+    RM -->|Authorized Sizing| Trade
+    SS -->|Validates Timing| Trade
+    
+    style Sup fill:#d8b4e2,stroke:#333,stroke-width:2px,color:#000
+    style Tech fill:#d4edda,stroke:#333,color:#000
+    style Narr fill:#cce5ff,stroke:#333,color:#000
+    style Crit fill:#f8d7da,stroke:#333,color:#000
+    style RM fill:#fff3cd,stroke:#333,color:#000
+    style Trade fill:#0d6efd,color:#fff,stroke:#333
+    </div>
+</body>
+</html>
