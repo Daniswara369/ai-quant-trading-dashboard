@@ -1,6 +1,6 @@
 # Quantryst: Institutional Multi-Agent Intelligence System
 
-> A full-stack Quantitative Trading Research platform powered by Machine Learning.
+> A full-stack Quantitative Trading Research platform.
 
 ![Quantryst Dashboard Prototype](https://img.shields.io/badge/Status-Active-success)
 ![Python](https://img.shields.io/badge/Backend-FastAPI-009688)
@@ -91,6 +91,9 @@ Quantryst implements a self-evolving weight system that rewards accuracy and pun
 # Clone and enter directory
 git clone https://github.com/Daniswara369/ai-quant-trading-dashboard.git
 cd ai-quant-trading-dashboard
+
+# Switch to the institutional logic branch
+git checkout v2-multi-agent-logic
 
 # Install dependencies
 pip install -r requirements.txt
