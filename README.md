@@ -9,9 +9,29 @@
 
 Quantryst is an advanced quantitative trading research platform that utilizes a collaborative multi-agent committee to generate high-probability market entries. Unlike traditional single-model systems, Quantryst employs a sophisticated adversarial debate loop between specialized "Institutional-Grade" agents, moderated by a centralized Manager, to ensure every signal is stress-tested before execution.
 
-🌍 **Live Demo:** [https://ai-quant-trading-dashboard.vercel.app/]
+🌍 **Live Demo:**
 
 ---
+
+## 📊 Dashboard Preview
+
+### Trading Signal Panel
+
+**Signal OFF**
+![Signal Off](https://github.com/user-attachments/assets/16b0b084-de57-4150-9d8f-64289f3f9982)
+
+**Signal ON**
+![Signal On](https://github.com/user-attachments/assets/0e0c2713-0a8c-41e4-bc20-1166164329c7)
+
+### Agent Analysis
+<img width="1650" height="478" alt="image" src="https://github.com/user-attachments/assets/5ce3ac2a-5a4e-48f7-82a3-b70c464c930c" />
+
+### Backtesting Results
+![Backtest](https://github.com/user-attachments/assets/08e88b0a-1d21-44ed-a98c-1fdd66c75e92)
+
+### Multi Asset Overview
+![Multi Asset](https://github.com/user-attachments/assets/e58fe26d-d5b7-4048-b73f-29147876e70d)
+
 
 ## 🏗️ System Architecture
 
