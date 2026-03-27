@@ -1,4 +1,4 @@
-# Quantryst: Institutional Multi-Agent Intelligence System
+# Quantryst: Multi-Agent Trading System
 
 > A full-stack Quantitative Trading Research platform.
 
