@@ -60,7 +60,21 @@ export default function App() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+
+    // Global 5-minute auto-refresh for Chart Data and AI Predictions
+    const refreshInterval = setInterval(async () => {
+      console.log("Running scheduled 5-minute global data refresh...");
+      try {
+        await apiRefreshData(symbol, timeframe);
+        await apiRefreshSignal(symbol, timeframe, 'xgboost');
+        await loadData();
+      } catch (err) {
+        console.error("Scheduled refresh failed:", err);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [loadData, symbol, timeframe]);
 
   const handleRefreshData = async () => {
     setLoading(true);

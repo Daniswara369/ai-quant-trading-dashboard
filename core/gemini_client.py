@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import time
 import google.generativeai as genai
 from typing import Dict, Any, List
 import sys
@@ -40,26 +41,54 @@ class GeminiClient:
             {json.dumps(headlines)}
             """
             
-            response = model.generate_content(prompt)
-            # Find JSON block
-            text = response.text.strip()
-            if text.startswith("```json"):
-                text = text[7:]
-            if text.endswith("```"):
-                text = text[:-3]
-                
-            return json.loads(text.strip())
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    response = model.generate_content(prompt)
+                    # Find JSON block
+                    text = response.text.strip()
+                    if text.startswith("```json"):
+                        text = text[7:]
+                    if text.startswith("```"):
+                        text = text[3:]
+                    if text.endswith("```"):
+                        text = text[:-3]
+                        
+                    return json.loads(text.strip())
+                except Exception as e:
+                    if "429" in str(e) and attempt < max_retries - 1:
+                        logger.warning(f"Rate limit hit in sentiment analysis. Retrying in {2 ** attempt}s...")
+                        time.sleep(2 ** attempt)
+                        continue
+                    raise e
+                    
         except Exception as e:
             logger.error(f"Sentiment analysis failed: {e}")
             return {"signal": "HOLD", "confidence": 0.5, "reasoning": f"Error: {e}"}
             
-    def supervisor_debate(self, technician_signal: str, technician_rebuttal: str, critic_objections: List[str], context: Dict[str, Any]) -> Dict[str, Any]:
+    def supervisor_debate(self, technician_signal: str, technician_rebuttal: str, critic_objections: List[str], context: Dict[str, Any], committee_snapshot: str = "") -> Dict[str, Any]:
         """Synthesizes the debate into a final weighted confidence and reasoning."""
         if not self.api_key:
             return {"confidence": 0.5, "reasoning": "Debate bypassed due to missing API key."}
             
         try:
             model = genai.GenerativeModel(self.pro_model)
+            
+            # Build the weight-aware prompt section
+            weight_instruction = ""
+            if committee_snapshot:
+                weight_instruction = f"""
+            
+            === COMMITTEE RELIABILITY WEIGHTS (from historical performance tracking) ===
+            {committee_snapshot}
+            
+            CRITICAL INSTRUCTION: You MUST weigh each agent's signal according to their current
+            Reliability Weight shown above. An agent with a weight of 0.43 is significantly more
+            trustworthy than one with 0.20. Factor these weights heavily into your final synthesis.
+            If an agent with a high reliability weight disagrees with a low-weight agent, strongly
+            favor the high-weight agent's position.
+            """
+            
             prompt = f"""
             You are the Manager Agent of an AI trading committee. Read the following debate and synthesize a final decision.
             
@@ -67,7 +96,7 @@ class GeminiClient:
             Analyst Proposed Signal: {technician_signal}
             Risk Auditor Objections: {json.dumps(critic_objections)}
             Analyst Rebuttal: {technician_rebuttal}
-            
+            {weight_instruction}
             Task:
             Evaluate the validity of the technical setup against the critic's concerns.
             Output your final synthesized analysis in strictly valid JSON format:
@@ -76,17 +105,30 @@ class GeminiClient:
                 "reasoning": "<your synthesized explanation>"
             }}
             """
-            response = model.generate_content(prompt)
-            text = response.text.strip()
-            if text.startswith("```json"):
-                text = text[7:]
-            if text.endswith("```"):
-                text = text[:-3]
             
-            return json.loads(text.strip())
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    response = model.generate_content(prompt)
+                    text = response.text.strip()
+                    if text.startswith("```json"):
+                        text = text[7:]
+                    if text.startswith("```"):
+                        text = text[3:]
+                    if text.endswith("```"):
+                        text = text[:-3]
+                    
+                    return json.loads(text.strip())
+                except Exception as e:
+                    if "429" in str(e) and attempt < max_retries - 1:
+                        logger.warning(f"Rate limit hit in supervisor debate. Retrying in {2 ** attempt}s...")
+                        time.sleep(2 ** attempt)
+                        continue
+                    raise e
+                    
         except Exception as e:
             logger.error(f"Supervisor debate failed: {e}")
-            return {"confidence_adj": 0.0, "reasoning": f"Debate synthesis failed: {e}"}
+            return {"confidence_adj": 0.0, "reasoning": f"Debate synthesis failed: 429 Rate limit hit. Using base technical weighting." if "429" in str(e) else f"Debate synthesis failed: {e}"}
             
     def function_call_trade(self, debate_summary: str, expected_signal: str) -> Dict[str, Any]:
         """Optional function calling to trigger mock trade execution based on debate."""

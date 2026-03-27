@@ -98,6 +98,15 @@ DATA_CACHE_DIR = os.path.join(BASE_DIR, "data", "cache")
 MODEL_SAVE_DIR = os.path.join(BASE_DIR, "models", "saved")
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 
+# Multi-agent telemetry (JSONL): logging + markout resolution + EMA weights
+AGENT_SIGNAL_LOG_PATH = os.getenv(
+    "AGENT_SIGNAL_LOG",
+    os.path.join(LOG_DIR, "agent_signals.jsonl"),
+)
+# Default committee names (override via AGENT_COMMITTEE_JSON='["A","B"]')
+_default_committee = '["Analyst", "Sentiment Strategist", "Risk Auditor"]'
+AGENT_COMMITTEE_JSON = os.getenv("AGENT_COMMITTEE_JSON", _default_committee)
+
 # Create directories
 for d in [DATA_CACHE_DIR, MODEL_SAVE_DIR, LOG_DIR]:
     os.makedirs(d, exist_ok=True)

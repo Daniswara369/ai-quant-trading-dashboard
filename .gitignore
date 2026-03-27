@@ -13,6 +13,7 @@ logs/
 data/cache/
 *.db
 *.sqlite3
+*.jsonl
 
 backtesting/cache/
 
