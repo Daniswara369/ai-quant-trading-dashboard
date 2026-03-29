@@ -11,7 +11,7 @@ Quantryst is an advanced quantitative trading research platform that utilizes a 
 
 🌍 **Live Demo:**
 
----
+
 
 ## 📊 Dashboard Preview
 
