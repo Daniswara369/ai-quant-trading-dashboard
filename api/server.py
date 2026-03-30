@@ -237,22 +237,142 @@ def get_market_data(
         "data": records,
     }
 
+def _symbol_news_query(symbol: str, market: str) -> str:
+    """Build market-aware search query so headlines stay instrument-specific."""
+    s = (symbol or "").upper().strip()
+
+    # Common aliases for higher precision on free news endpoints
+    crypto_alias = {
+        "BTCUSDT": "Bitcoin OR BTC",
+        "ETHUSDT": "Ethereum OR ETH",
+    }
+    stock_alias = {
+        "AAPL": "Apple OR AAPL",
+        "MSFT": "Microsoft OR MSFT",
+        "TSLA": "Tesla OR TSLA",
+    }
+    forex_alias = {
+        "EURUSD": "EURUSD OR euro dollar OR ECB OR Fed",
+        "GBPUSD": "GBPUSD OR pound dollar OR BOE OR Fed",
+        "USDJPY": "USDJPY OR dollar yen OR BOJ OR Fed",
+        "AUDUSD": "AUDUSD OR aussie dollar OR RBA OR Fed",
+        "USDCAD": "USDCAD OR dollar loonie OR BOC OR Fed OR oil",
+        "USDCHF": "USDCHF OR dollar swiss franc OR SNB OR Fed",
+        "NZDUSD": "NZDUSD OR kiwi dollar OR RBNZ OR Fed",
+    }
+
+    if market == "crypto":
+        base = s.replace("USDT", "").replace("USD", "")
+        return crypto_alias.get(s, f"{base} OR {s}")
+    if market == "stock":
+        return stock_alias.get(s, f"{s} stock OR {s} earnings")
+    if market == "forex":
+        return forex_alias.get(s, f"{s} OR central bank OR rates")
+    return s
+
+
 def fetch_news_for_symbol(symbol: str) -> list[str]:
-    """Fetches recent news headlines for a given symbol using a free, public API."""
-    base_asset = symbol.replace("USDT", "").replace("USD", "").upper()
+    """
+    Fetch instrument-related headlines using free APIs.
+    Priority:
+    1) CryptoCompare for crypto symbols
+    2) GDELT DOC query tuned to the chosen instrument (all markets)
+    """
+    market = detect_market_type(symbol)
+    s = (symbol or "").upper().strip()
+    results: List[str] = []
+
+    # 1) Fast crypto-specific feed
+    if market == "crypto":
+        base_asset = s.replace("USDT", "").replace("USD", "")
+        try:
+            url = f"https://min-api.cryptocompare.com/data/v2/news/?categories={base_asset}"
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("Data"):
+                    for item in data["Data"][:6]:
+                        title = (item.get("title") or "").strip()
+                        if title:
+                            results.append(title)
+        except Exception as e:
+            logger.warning(f"CryptoCompare news fetch failed for {symbol}: {e}")
+
+    # 2) Instrument-aware global news (free, no key)
+    query = _symbol_news_query(s, market)
     try:
-        url = f"https://min-api.cryptocompare.com/data/v2/news/?categories={base_asset}"
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("Data"):
-                return [item["title"] for item in data["Data"][:5]]
+        url = "https://api.gdeltproject.org/api/v2/doc/doc"
+        params = {
+            "query": query,
+            "mode": "artlist",
+            "format": "json",
+            "maxrecords": 8,
+            "sort": "HybridRel",
+        }
+        resp = requests.get(url, params=params, timeout=6)
+        if resp.status_code == 200:
+            data = resp.json()
+            arts = data.get("articles") or []
+            for a in arts:
+                title = (a.get("title") or "").strip()
+                if title:
+                    results.append(title)
     except Exception as e:
-        logger.error(f"Error fetching news for {symbol}: {e}")
-    
+        logger.warning(f"GDELT symbol news fetch failed for {symbol}: {e}")
+
+    # Deduplicate while preserving order
+    deduped: List[str] = []
+    seen = set()
+    for t in results:
+        key = t.lower()
+        if key not in seen:
+            seen.add(key)
+            deduped.append(t)
+
+    if deduped:
+        return deduped[:8]
+
     return [
-        f"Market awaits fresh macroeconomic catalysts for {symbol}.", 
-        f"Trading volume for {symbol} remains steady amidst uncertainty."
+        f"{symbol} news flow is currently thin; awaiting fresh instrument-specific catalysts.",
+        f"{symbol} trades in a macro-sensitive environment with mixed short-term headlines.",
+    ]
+
+
+def fetch_global_macro_headlines() -> list[str]:
+    """
+    Fetches top global-macro headlines using a free, public API.
+    Uses GDELT 2 DOC endpoint (no API key required) and focuses on 2026-relevant macro triggers.
+
+    Target themes: Strait of Hormuz, Fed policy, OPEC/energy supply.
+    """
+    query = "Hormuz OR Fed OR OPEC"
+    try:
+        url = "https://api.gdeltproject.org/api/v2/doc/doc"
+        params = {
+            "query": query,
+            "mode": "artlist",
+            "format": "json",
+            "maxrecords": 3,
+            "sort": "HybridRel",
+        }
+        resp = requests.get(url, params=params, timeout=6)
+        if resp.status_code == 200:
+            data = resp.json()
+            arts = data.get("articles") or []
+            titles = []
+            for a in arts[:3]:
+                t = (a.get("title") or "").strip()
+                if t:
+                    titles.append(t)
+            if titles:
+                return titles
+    except Exception as e:
+        logger.warning(f"Global macro news fetch failed: {e}")
+
+    return [
+        "Fed officials reiterate data-dependent stance as inflation risks persist.",
+        "OPEC+ signals continued supply discipline amid volatile energy markets.",
+        "Strait of Hormuz remains a key energy chokepoint; risk premium stays elevated.",
     ]
 
 @app.websocket("/ws/agent-thoughts")
@@ -306,7 +426,8 @@ async def run_agent_signal(
         indicators={},
         timestamp=datetime.now(),
         metadata={
-            "news_headlines": fetch_news_for_symbol(symbol)
+            "news_headlines": fetch_news_for_symbol(symbol),
+            "global_headlines": fetch_global_macro_headlines(),
         }
     )
     

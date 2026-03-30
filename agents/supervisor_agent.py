@@ -90,7 +90,7 @@ class SupervisorAgent:
         
         return "\n".join(lines) if lines else ""
 
-    def _log_signals_to_store(self, agent_outputs: List, context: AgentContext, entry_price: float):
+    def _log_signals_to_store(self, agent_outputs: List, context: AgentContext, entry_price: float, weights: Dict[str, float] = None):
         """Log each agent's signal to Jackson's SignalLogStore for future performance tracking."""
         try:
             import json
@@ -113,6 +113,7 @@ class SupervisorAgent:
                     entry_price=entry_price,
                     symbol=context.symbol,
                     decision_id=decision_id,
+                    weight=weights.get(agent_out.agent_name) if weights else None
                 )
                 store.append_vote(vote)
 
@@ -202,6 +203,9 @@ class SupervisorAgent:
         narr_score = to_numeric(narr_out.signal) * narr_out.confidence * weights["Sentiment Strategist"]
         critic_score = to_numeric(critic_out.signal) * critic_out.confidence * weights["Risk Auditor"]
         
+        # --- Institutional Alpha Filter (No-Trade Zone) ---
+        ALPHA_THRESHOLD = 0.45  # Stricter requirement for committee edge
+        CONFIDENCE_FLOOR = 0.65 # Stricter requirement for synthesized confidence
         raw_weighted_score = tech_score + narr_score + critic_score
         base_confidence = abs(raw_weighted_score)
         
@@ -209,26 +213,46 @@ class SupervisorAgent:
         confidence_adj = float(debate_result.get("confidence_adj", 0.0))
         final_confidence = min(max(base_confidence + confidence_adj, 0.0), 1.0)
         
-        if raw_weighted_score > 0.1:
+        alpha_edge = abs(raw_weighted_score)
+        is_alpha_valid = alpha_edge >= ALPHA_THRESHOLD
+        is_conf_valid = final_confidence >= CONFIDENCE_FLOOR
+        
+        final_reasoning = debate_result.get("reasoning", "Debate failed; using base technical weighting.")
+        
+        # Determine final signal with filtering logic
+        if raw_weighted_score > ALPHA_THRESHOLD and is_conf_valid:
             final_signal = "BUY"
-        elif raw_weighted_score < -0.1:
+        elif raw_weighted_score < -ALPHA_THRESHOLD and is_conf_valid:
             final_signal = "SELL"
         else:
             final_signal = "HOLD"
+            # Annotate reasoning if filter suppressed the signal
+            if (raw_weighted_score > 0.1 or raw_weighted_score < -0.1) and (not is_alpha_valid or not is_conf_valid):
+                notrade_reason = f"[NO-TRADE ZONE ACTIVE] Signal suppressed due to insufficient edge (Edge: {alpha_edge:.3f} < {ALPHA_THRESHOLD} or Confidence: {final_confidence:.2f} < {CONFIDENCE_FLOOR})."
+                final_reasoning = f"{notrade_reason}\n\n{final_reasoning}"
         
-        # Step 4: Log all agent signals to Jackson's store for future performance tracking
+        # Step 4: Log all agent signals including the Manager's final consensus
         entry_price = 0.0
         try:
             if context.ohlcv_df is not None and not context.ohlcv_df.empty:
                 entry_price = float(context.ohlcv_df.iloc[-1].get("Close", 0.0))
         except Exception:
             pass
-        self._log_signals_to_store([tech_out, narr_out, critic_out], context, entry_price)
+            
+        # Create a virtual agent output for the Manager's final decision
+        manager_out = AgentOutput(
+            agent_name="Manager (Consensus)",
+            signal=final_signal,
+            confidence=final_confidence,
+            reasoning=final_reasoning
+        )
+        
+        self._log_signals_to_store([tech_out, narr_out, critic_out, manager_out], context, entry_price, weights=weights)
             
         return WeightedConsensus(
             signal=final_signal,
             confidence=final_confidence,
-            reasoning=debate_result.get("reasoning", "Debate failed; using base technical weighting."),
+            reasoning=final_reasoning,
             agent_outputs=[tech_out, narr_out, critic_out],
             regime=market_regime
         )

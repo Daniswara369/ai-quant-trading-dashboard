@@ -26,6 +26,9 @@ Quantryst is an advanced quantitative trading research platform that utilizes a 
 ### Agent Analysis
 <img width="1650" height="478" alt="image" src="https://github.com/user-attachments/assets/5ce3ac2a-5a4e-48f7-82a3-b70c464c930c" />
 
+### System Architecture
+![System Architecture]
+
 ### Backtesting Results
 ![Backtest](https://github.com/user-attachments/assets/08e88b0a-1d21-44ed-a98c-1fdd66c75e92)
 

@@ -300,6 +300,13 @@ class TechnicianAgent(BaseAgent):
         if gaps:
             thesis_points.append(f"Liquidity gaps: {'; '.join(gaps)}")
 
+        # ── Performance-Based Calibration ──
+        # Anchor heuristic confidence to historical win rate (to fix overconfidence)
+        calibration_note = ""
+        perf = context.metadata.get("agent_performance", {}).get(self.name, {})
+        win_rate = perf.get("ema_win_15m", 0.5)
+        n_resolved = perf.get("n_resolved", 0)
+        
         # ── Final Signal ──
         if score >= 2.0:
             signal = "BUY"
@@ -311,12 +318,27 @@ class TechnicianAgent(BaseAgent):
             signal = "HOLD"
             confidence = 0.5
 
+        if signal != "HOLD":
+            # If we have enough samples, adjust confidence toward the win rate
+            if n_resolved >= 5:
+                # Weighted blend: 40% heuristic, 60% historical reliability
+                calibrated_conf = (confidence * 0.4) + (win_rate * 0.6)
+                
+                # If win rate is poor (<50%), apply a 'skepticism penalty'
+                if win_rate < 0.5:
+                    calibrated_conf *= 0.85 
+                    calibration_note = f" [Calibration: Confidence deflated due to {win_rate:.1%} historical reliability]."
+                else:
+                    calibration_note = f" [Calibration: Performance-anchored at {calibrated_conf:.1%}]."
+                
+                confidence = min(max(calibrated_conf, 0.3), 0.95)
+
         if not thesis_points:
             thesis_points.append("No high-conviction institutional setups identified.")
 
         # Build Technical Thesis
         entry_str = f"High-Probability Entry Zone: {entry_zone['zone_low']:.4f} – {entry_zone['zone_high']:.4f} (VWAP ± 0.5×ATR)"
-        thesis = f"TECHNICAL THESIS: {'; '.join(thesis_points)}. {entry_str}.{weight_note}"
+        thesis = f"TECHNICAL THESIS: {'; '.join(thesis_points)}. {entry_str}.{weight_note}{calibration_note}"
 
         trigger_price = latest.get("Close", 0)
 

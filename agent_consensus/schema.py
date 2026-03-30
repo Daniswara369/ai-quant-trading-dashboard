@@ -72,6 +72,7 @@ class AgentVote:
     entry_price: float  # mid or last
     symbol: str
     timeframe: str = "1h"
+    weight: Optional[float] = None  # Added for reporting
     decision_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: str = field(default_factory=_utc_now_iso)
 
@@ -111,6 +112,7 @@ class AgentSignalRecord:
     entry_price: float
     symbol: str
     timeframe: str
+    weight: Optional[float] = None  # Added for reporting
     price_5m: Optional[float] = None
     price_15m: Optional[float] = None
     markout_5m: Optional[float] = None
@@ -131,6 +133,7 @@ class AgentSignalRecord:
             entry_price=vote.entry_price,
             symbol=vote.symbol,
             timeframe=vote.timeframe,
+            weight=vote.weight,
         )
 
     @classmethod
@@ -147,6 +150,7 @@ class AgentSignalRecord:
             entry_price=float(d["entry_price"]),
             symbol=str(d["symbol"]).strip(),
             timeframe=str(d.get("timeframe") or "1h"),
+            weight=_opt_float(d.get("weight")),
             price_5m=_opt_float(d.get("price_5m")),
             price_15m=_opt_float(d.get("price_15m")),
             markout_5m=_opt_float(d.get("markout_5m")),
