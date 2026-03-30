@@ -26,9 +26,6 @@ Quantryst is an advanced quantitative trading research platform that utilizes a 
 ### Agent Analysis
 <img width="1650" height="478" alt="image" src="https://github.com/user-attachments/assets/5ce3ac2a-5a4e-48f7-82a3-b70c464c930c" />
 
-### System Architecture
-![System Architecture]
-
 ### Backtesting Results
 ![Backtest](https://github.com/user-attachments/assets/08e88b0a-1d21-44ed-a98c-1fdd66c75e92)
 
@@ -39,6 +36,9 @@ Quantryst is an advanced quantitative trading research platform that utilizes a 
 ## 🏗️ System Architecture
 
 The core of Quantryst is its **Adversarial Committee Architecture**, which mimics the workflow of a high-frequency hedge fund trading desk.
+
+<img width="1602" height="613" alt="image" src="https://github.com/user-attachments/assets/be4f8046-1b57-4fd5-82ed-c0de2ee4c712" />
+
 
 ### 1. The Analyst (Technical & Order Flow)
 Responsible for identifying structural market shifts and liquidity-driven opportunities.
@@ -60,17 +60,23 @@ Acting as the committee's "Devil's Advocate," this agent's sole purpose is to fi
 *   **Half-Kelly Position Sizing**: Dynamically scales entry size based on the committee’s current reliability and ATR-derived volatility.
 *   **ATR-Based Risk/Reward**: Automatically sets stop-loss and take-profit targets based on N-period Average True Range.
 
+### 4. The Manager (Supervisor Agent)
+The centralized intelligence that moderates the adversarial debate.
+*   **Debate Synthesis**: Forces the committee into a "Deep Thinking" debate loop where agents must defend their signals against the Auditor's objections.
+*   **Institutional Selective Filter**: Enforces the **Alpha Floor** (weighted edge ≥ 0.45), suppressing noisy signals into a "No-Trade Zone" to preserve capital.
+*   **Consensus Generation**: Synthesizes conflicting signals into a final, high-conviction decision using a dynamically weighted consensus model.
+
 ---
 
 ## ⚖️ Dynamic Reliability Weighting
 
 Quantryst implements a self-evolving weight system that rewards accuracy and punishes failures in real-time.
 
-1.  **🛡️ Institutional Alpha Filter**: A strict "No-Trade Zone" floor. The committee must reach a weighted edge of **0.45** and a synthesized confidence of **0.65** to even *proposal* a trade. Anything less is automatically suppressed as a `HOLD`.
-2.  **⚖️ Performance-Based Calibration**: Every agent's confidence is now anchored to their **15-minute EMA Win Rate**. 
+1.  Institutional Alpha Filter**: A strict "No-Trade Zone" floor. The committee must reach a weighted edge of **0.45** and a synthesized confidence of **0.65** to even *proposal* a trade. Anything less is automatically suppressed as a `HOLD`.
+2.  Performance-Based Calibration**: Every agent's confidence is now anchored to their **15-minute EMA Win Rate**. 
     *   **Analyst (Technician)**: Gains influence when structural breakouts are confirmed.
     *   **Strategist (Narrator)**: Risk-haircuts are dynamically relaxed when sentiment reliability is high.
-3.  **⏱️ High-Frequency Sync**: Dashboard and Agent "Live Thoughts" now refresh every **30 seconds** for real-time validation.
+3.  High-Frequency Sync**: Dashboard and Agent "Live Thoughts" now refresh every **30 seconds** for real-time validation.
 
 ---
 
