@@ -33,7 +33,7 @@ Quantryst is an advanced quantitative trading research platform that utilizes a 
 ![Multi Asset](https://github.com/user-attachments/assets/e58fe26d-d5b7-4048-b73f-29147876e70d)
 
 
-## 🏗️ System Architecture
+## 🏗️ Agent Committee System Architecture
 
 The core of Quantryst is its **Adversarial Committee Architecture**, which mimics the workflow of a high-frequency hedge fund trading desk.
 
