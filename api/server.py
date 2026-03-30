@@ -16,10 +16,12 @@ sys.path.insert(0, PROJECT_ROOT)
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List
 import pandas as pd
 import numpy as np
 
+import config as app_config
 from config import (
     ALL_ASSETS, SUPPORTED_TIMEFRAMES, CRYPTO_ASSETS,
     STOCK_ASSETS, FOREX_ASSETS, MODEL_SAVE_DIR, LSTM_PARAMS,
@@ -29,6 +31,13 @@ from feature_engineering import engineer_features
 from models.model_trainer import load_model
 from strategies.signal_rules import generate_signal_from_probability
 from backtesting.backtest_engine import BacktestEngine
+
+from agent_consensus import (
+    AgentVote,
+    SignalLogStore,
+    build_committee_snapshot,
+    committee_agreement_metrics,
+)
 
 # ──────────────────────────────────────────────
 # App setup
@@ -49,6 +58,60 @@ app.add_middleware(
 
 DASHBOARD_ASSETS = ["BTCUSDT", "ETHUSDT", "AAPL", "MSFT", "TSLA", "EURUSD", "GBPUSD", "USDJPY"]
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "backtesting", "results")
+
+
+def _default_committee() -> List[str]:
+    try:
+        parsed = json.loads(app_config.AGENT_COMMITTEE_JSON)
+        if isinstance(parsed, list) and all(isinstance(x, str) for x in parsed):
+            return parsed
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return ["TechnicalAnalyst", "SentimentStrategist", "RiskAuditor"]
+
+
+class AgentVotePayload(BaseModel):
+    agent_name: str = Field(..., min_length=1)
+    direction: int = Field(..., ge=-1, le=1)
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    entry_price: float = Field(..., gt=0)
+    symbol: str = Field(..., min_length=1)
+    timeframe: str = "1h"
+    decision_id: Optional[str] = None
+
+    @field_validator("agent_name", "symbol", mode="before")
+    @classmethod
+    def strip_names(cls, v: str) -> str:
+        if not isinstance(v, str):
+            raise TypeError("expected string")
+        s = v.strip()
+        if not s:
+            raise ValueError("must not be empty")
+        return s
+
+
+class ResolveMarkoutPayload(BaseModel):
+    decision_id: str = Field(..., min_length=1)
+    agent_name: str = Field(..., min_length=1)
+
+    @field_validator("decision_id", "agent_name", mode="before")
+    @classmethod
+    def strip_ids(cls, v: str) -> str:
+        if not isinstance(v, str):
+            raise TypeError("expected string")
+        s = v.strip()
+        if not s:
+            raise ValueError("must not be empty")
+        return s
+
+    price_5m: Optional[float] = Field(None, gt=0)
+    price_15m: Optional[float] = Field(None, gt=0)
+
+
+class AgreementPayload(BaseModel):
+    """Current-bar votes for agreement metrics only (not persisted)."""
+
+    votes: List[dict]  # [{"direction": 1, "confidence": 0.7}, ...]
 
 # ──────────────────────────────────────────────
 # Helpers
@@ -339,6 +402,90 @@ def refresh_signal(
         "probability_down": round(1.0 - latest_prob, 4),
         "latest_timestamp": str(df.index[-1]),
     }
+
+
+@app.get("/api/agent-committee/snapshot")
+def get_agent_committee_snapshot(
+    alpha: float = Query(0.15, ge=0.01, le=1.0),
+    temperature: float = Query(4.0, gt=0, le=50.0),
+    min_weight: float = Query(0.15, gt=0, lt=1),
+    max_weight: float = Query(0.55, gt=0, le=1),
+):
+    """
+    Deterministic EMA performance + capped weights from `AGENT_SIGNAL_LOG` JSONL.
+    Optional env `AGENT_COMMITTEE_JSON` lists agent names for the committee.
+    """
+    committee = _default_committee()
+    store = SignalLogStore(app_config.AGENT_SIGNAL_LOG_PATH)
+    try:
+        snap = build_committee_snapshot(
+            store,
+            committee,
+            alpha=alpha,
+            temperature=temperature,
+            min_weight=min_weight,
+            max_weight=max_weight,
+        )
+    except ValueError as e:
+        msg = str(e)
+        # Corrupt on-disk log is a server/data integrity issue, not a client mistake
+        status = 500 if "Invalid agent signal log line" in msg else 400
+        raise HTTPException(status_code=status, detail=msg)
+    snap["committee"] = committee
+    snap["log_path"] = app_config.AGENT_SIGNAL_LOG_PATH
+    return snap
+
+
+@app.post("/api/agent-committee/vote")
+def post_agent_vote(payload: AgentVotePayload):
+    """Append one validated agent vote row to the JSONL log."""
+    store = SignalLogStore(app_config.AGENT_SIGNAL_LOG_PATH)
+    kw = dict(
+        agent_name=payload.agent_name,
+        direction=payload.direction,
+        confidence=payload.confidence,
+        entry_price=payload.entry_price,
+        symbol=payload.symbol,
+        timeframe=payload.timeframe,
+    )
+    try:
+        if payload.decision_id is not None and str(payload.decision_id).strip():
+            did = str(payload.decision_id).strip()
+            vote = AgentVote(**kw, decision_id=did)
+        else:
+            vote = AgentVote(**kw)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    rec = store.append_vote(vote)
+    return {"status": "ok", "record": rec.to_dict()}
+
+
+@app.post("/api/agent-committee/resolve-markout")
+def post_resolve_markout(payload: ResolveMarkoutPayload):
+    """Attach 5m/15m prices to an existing row; recomputes markouts."""
+    if payload.price_5m is None and payload.price_15m is None:
+        raise HTTPException(status_code=400, detail="Provide price_5m and/or price_15m")
+    store = SignalLogStore(app_config.AGENT_SIGNAL_LOG_PATH)
+    n = store.update_row_prices(
+        payload.decision_id,
+        payload.agent_name,
+        price_5m=payload.price_5m,
+        price_15m=payload.price_15m,
+    )
+    if n == 0:
+        raise HTTPException(status_code=404, detail="No matching decision_id + agent_name")
+    return {"status": "ok", "updated": n}
+
+
+@app.post("/api/agent-committee/agreement")
+def post_committee_agreement(payload: AgreementPayload):
+    """Compute confidence-weighted agreement for a set of live votes (no DB write)."""
+    votes = []
+    for v in payload.votes:
+        d = int(v.get("direction", 0))
+        c = float(v.get("confidence", 0.0))
+        votes.append((d, c))
+    return committee_agreement_metrics(votes)
 
 
 @app.get("/")
