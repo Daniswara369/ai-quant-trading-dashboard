@@ -1,6 +1,6 @@
 # Quantryst: Multi-Agent Trading System
 
-> A full-stack Quantitative Trading Research platform.
+> A Quantitative Trading Research platform.
 
 ![Quantryst Dashboard Prototype](https://img.shields.io/badge/Status-Active-success)
 ![Python](https://img.shields.io/badge/Backend-FastAPI-009688)
