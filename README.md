@@ -7,7 +7,7 @@
 ![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB)
 ![ML](https://img.shields.io/badge/ML-XGBoost%20%2B%20LightGBM-F05340)
 
-Quantryst is an advanced quantitative trading research platform that utilizes a collaborative multi-agent committee to generate high-probability market entries. Unlike traditional single-model systems, Quantryst utilizes a **Self-Correcting Adversarial Committee** designed to replicate institutional decision-making.ents, moderated by a centralized Manager, to ensure every signal is stress-tested before execution.
+Quantryst is an quantitative trading research platform that utilizes a collaborative multi-agent committee to generate high-probability market entries. Unlike traditional single-model systems, Quantryst utilizes a **Self-Correcting Adversarial Committee** designed to replicate institutional decision-making.ents, moderated by a centralized Manager, to ensure every signal is stress-tested before execution.
 
 🌍 **Live Demo:**
 -----
